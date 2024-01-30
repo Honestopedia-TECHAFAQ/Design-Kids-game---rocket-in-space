@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rocket Sky Adventure</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #87CEEB; 
+    }
+    #game-container {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+    }
+    #rocket {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        width: 100px;
+        height: 100px;
+        transform: translateX(-50%);
+        z-index: 1;
+    }
+    .object {
+        position: absolute;
+        font-size: 20px;
+        z-index: 0;
+        animation: moveObject 5s linear infinite;
+    }
+    @keyframes moveObject {
+        0% { transform: translateY(-100vh); }
+        100% { transform: translateY(100vh); }
+    }
+</style>
+</head>
+<body>
+<div id="game-container">
+    <img id="rocket" src="1.png" alt="Rocket">
+</div>
+<script>
+    const gameContainer = document.getElementById("game-container");
+    const rocket = document.getElementById("rocket");
+    let gameOver = false;
+    let rocketSpeed = 10; 
+    let rocketDirection = 0; 
+    let score = 0;
+    let lives = 3;
+
+    window.addEventListener("keydown", (e) => {
+        if (!gameOver) {
+            if (e.key === "ArrowLeft") {
+                rocketDirection = -1;
+            } else if (e.key === "ArrowRight") {
+                rocketDirection = 1;
+            }
+        }
+    });
+
+    window.addEventListener("keyup", (e) => {
+        if (!gameOver) {
+            if (e.key === "ArrowLeft" && rocketDirection === -1) {
+                rocketDirection = 0;
+            } else if (e.key === "ArrowRight" && rocketDirection === 1) {
+                rocketDirection = 0;
+            }
+        }
+    });
+
+    function moveRocket() {
+        if (rocketDirection === -1 && rocket.offsetLeft > 0) {
+            rocket.style.left = (rocket.offsetLeft - rocketSpeed) + "px";
+        } else if (rocketDirection === 1 && rocket.offsetLeft + rocket.offsetWidth < window.innerWidth) {
+            rocket.style.left = (rocket.offsetLeft + rocketSpeed) + "px";
+        }
+        checkCollision();
+    }
+
+    function createObject() {
+        if (!gameOver) {
+            const objectTypes = ["star", "cloud", "balloon"];
+            const objectType = objectTypes[Math.floor(Math.random() * objectTypes.length)];
+            const color = randomColor();
+            const letter = randomLetter();
+            const number = randomNumber();
+
+            const object = document.createElement("div");
+            object.classList.add("object");
+            object.textContent = objectType === "star" ? color : objectType === "cloud" ? letter : number;
+            object.style.color = objectType === "star" ? color : "black";
+            object.style.top = "-50px";
+            object.style.left = Math.random() * (window.innerWidth - 50) + "px";
+
+            gameContainer.appendChild(object);
+            animateObject(object);
+        }
+    }
+
+    function randomColor() {
+        const colors = ["red", "blue", "green", "yellow"];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function randomLetter() {
+        const letters = ["A", "B", "C", "D"];
+        return letters[Math.floor(Math.random() * letters.length)];
+    }
+
+    function randomNumber() {
+        return Math.floor(Math.random() * 4) + 1;
+    }
+
+    function animateObject(object) {
+        const objectSpeed = Math.random() * 3 + 1;
+        const animationInterval = setInterval(() => {
+            if (parseInt(object.style.top) > window.innerHeight) {
+                object.remove();
+                clearInterval(animationInterval);
+            } else {
+                object.style.top = (parseInt(object.style.top) + objectSpeed) + "px";
+            }
+        }, 20);
+    }
+
+    function checkCollision() {
+        const rocketPosition = rocket.getBoundingClientRect();
+        const objects = document.querySelectorAll(".object");
+
+        objects.forEach((object) => {
+            const objectPosition = object.getBoundingClientRect();
+            if (rocketPosition.bottom >= objectPosition.top &&
+                rocketPosition.top <= objectPosition.bottom &&
+                rocketPosition.right >= objectPosition.left &&
+                rocketPosition.left <= objectPosition.right) {
+                const objectType = object.textContent;
+                if (objectType !== "star") {
+                    lives--;
+                    updateLives();
+                    if (lives === 0) {
+                        endGame();
+                    }
+                } else {
+                    score += 10; 
+                    updateScore();
+                }
+                object.remove();
+            }
+        });
+    }
+
+    function updateScore() {
+        const scoreElement = document.getElementById("score");
+        scoreElement.textContent = "Score: " + score;
+    }
+
+    function updateLives() {
+        const livesElement = document.getElementById("lives");
+        livesElement.textContent = "Lives: " + lives;
+    }
+
+    function endGame() {
+        gameOver = true;
+        const gameOverMessage = document.createElement("div");
+        gameOverMessage.textContent = "Game Over!";
+        gameOverMessage.style.position = "absolute";
+        gameOverMessage.style.top = "50%";
+        gameOverMessage.style.left = "50%";
+        gameOverMessage.style.transform = "translate(-50%, -50%)";
+        gameOverMessage.style.fontSize = "40px";
+        gameOverMessage.style.color = "red";
+        gameOverMessage.style.fontWeight = "bold";
+        gameContainer.appendChild(gameOverMessage);
+    }
+
+
+    setInterval(createObject, 2000);
+
+
+    setInterval(moveRocket, 20);
+</script>
+</body>
+</html>
